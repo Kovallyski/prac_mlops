@@ -14,7 +14,6 @@ import json
 
 class ModelTrainer:
     def __init__(self, config_path='config.json'):
-        self.models = {}
         self.model = None
         self.best_model = None
         self.name_of_best = None
@@ -50,6 +49,10 @@ class ModelTrainer:
             
         model.fit(X_train, y_train)
         self.model = model
+
+        if self.best_model is None:
+            self.best_model = self.model 
+
         # self.models['initial'] = model
         return self.model
     
@@ -93,11 +96,8 @@ class ModelTrainer:
     
     def save_model(self, metrics, best=False):
         """Сохранение модели и метрик"""
-        model_name = f"model_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pkl"
+        model_name = f"model_{self.model_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pkl"
         model_path = os.path.join('models', model_name)
-
-        if best:
-            self.name_of_best = model_name
         
         with open(model_path, 'wb') as f:
             pickle.dump({
@@ -112,9 +112,21 @@ class ModelTrainer:
         with open(history_path, 'w') as f:
             json.dump(self.history, f)
 
+        if best:
+            model_name = f"best_{self.model_type}.pkl"
+            model_path = os.path.join('models', model_name)
+        
+            with open(model_path, 'wb') as f:
+                pickle.dump({
+                    'model': self.best_model,
+                    'metrics': metrics,
+                    'model_type': self.model_type,
+                    'hyperparams': self.hyperparams
+                }, f)
+
     def load_model(self, name=None):
         if name is None:
-            model_path = os.path.join('models', self.name_of_best)
+            model_path = os.path.join('models', f"best_{self.model_type}.pkl")
         else:
             model_path = os.path.join('models', name)
 
@@ -188,6 +200,73 @@ class ModelTrainer:
         
         return grid_search.best_params_
     
+    def hyperparameter_tuning_with_preproc(self, X, y, preproc, grid=None, val='CV'):
+        """Подбор гиперпараметров с временной кросс-валидацией"""
+
+        if val == 'CV':
+            cv = self.n_splits
+        else:
+            cv = TimSeriesSplit(n_splits=self.n_splits)
+
+        if self.model_type == 'logistic':
+            param_grid = {
+                'C': [0.1, 1, 10],
+                'penalty': ['l1', 'l2'],
+                'solver': ['liblinear']
+            }
+            model = LogisticRegression()
+
+        elif self.model_type == 'tree':
+            param_grid = {
+                'max_depth': [3, 5, 7],
+                'min_samples_split': [2, 5, 10],
+                'criterion': ['gini', 'entropy']
+            }
+            model = DecisionTreeClassifier()
+
+        elif self.model_type == 'knn':
+            param_grid = {
+                'n_neighbors': [3, 5, 7],
+                'weights': ['uniform', 'distance'],
+                'metric': ['euclidean', 'manhattan']
+            }
+            model = KNeighborsClassifier()
+
+        if grid is None:
+            grid = param_grid
+        
+        grid_search = GridSearchCV(
+                    make_pipeline(preproc, model),
+                    param_grid=grid,
+                    cv=cv,
+                    scoring='accuracy',
+                    n_jobs=-1)
+        grid_search.fit(X, y)
+        
+        # Обновляем лучшие параметры
+        self.hyperparams = grid_search.best_params_
+        self.model = grid_search.best_estimator_
+        accuracy = grid_search.best_score_
+
+        accuracy_b = cross_val_score(
+            make_pipeline(preproc, self.best_model), X, y,
+            cv=self.n_splits, scoring='accuracy').mean()
+
+        if accuracy > accuracy_b:
+            self.best_model = self.model
+
+            metrics = {
+                'timestamp': datetime.now().isoformat(),
+                'accuracy': accuracy
+            }
+
+            self.save_model(metrics, best=True)
+        
+        # Сохраняем результаты подбора
+        self.save_hyperparam_report(grid_search.cv_results_)
+        
+        return grid_search.best_params_
+
     def save_hyperparam_report(self, cv_results):
         """Сохранение отчета по подбору гиперпараметров"""
         report = {
@@ -204,31 +283,13 @@ class ModelTrainer:
         # Визуализация
         self.plot_hyperparam_results(cv_results)
     
-    def plot_hyperparam_results(self, cv_results):
-        """Визуализация результатов подбора гиперпараметров"""
-        params = list(self.hyperparams.keys())
-        
-        plt.figure(figsize=(12, 6))
-        for i, param in enumerate(params, 1):
-            plt.subplot(1, len(params), i)
-            plt.plot(cv_results[f'param_{param}'].data, 
-                    cv_results['mean_test_score'], 'o-')
-            plt.title(param)
-            plt.xlabel(param)
-            plt.ylabel('Accuracy')
-        
-        plt.tight_layout()
-        plot_path = os.path.join('reports', 'hyperparam_tuning.png')
-        plt.savefig(plot_path)
-        plt.close()
-    
     def generate_summary(self):
         """Генерация отчета о работе модели"""
         summary = {
             'best_model': {
                 'type': self.model_type,
                 'hyperparams': self.hyperparams,
-                'score': self.best_score
+                
             },
             'history': self.history,
             'last_update': datetime.now().isoformat()
