@@ -3,7 +3,7 @@ import pickle
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score, f1_score
 from sklearn.model_selection import TimeSeriesSplit, GridSearchCV, cross_val_score
@@ -11,6 +11,8 @@ from sklearn.preprocessing import StandardScaler
 from datetime import datetime
 import matplotlib.pyplot as plt
 import json
+import lime
+import lime.lime_tabular
 
 class ModelTrainer:
     def __init__(self, config_path='config.json'):
@@ -21,6 +23,14 @@ class ModelTrainer:
         self.n_splits = 5
         self.load_config(config_path)
         self.init_storage()
+        self.metrics_for_drift_det = []
+        self.feature_names = None
+        self.class_names = None
+        
+    def set_feature_info(self, feature_names, class_names):
+        """Установка имен признаков и классов для интерпретации"""
+        self.feature_names = feature_names
+        self.class_names = class_names
         
     def load_config(self, config_path):
         """Загрузка конфигурации из JSON файла"""
@@ -39,9 +49,9 @@ class ModelTrainer:
     def train_initial_model(self, X_train, y_train):
         """Первоначальное обучение модели"""
         if self.model_type == 'logistic':
-            model = LogisticRegression(**self.hyperparams)
-        elif self.model_type == 'tree':
-            model = DecisionTreeClassifier(**self.hyperparams)
+            model = LogisticRegression(**self.hyperparams, warm_start=True)
+        elif self.model_type == 'random_forest':
+            model = RandomForestClassifier(**self.hyperparams, warm_start=True)
         elif self.model_type == 'knn':
             model = KNeighborsClassifier(**self.hyperparams)
         else:
@@ -67,7 +77,7 @@ class ModelTrainer:
     
     def update_model(self, X_new, y_new):
         """Дообучение модели на новых данных"""
-        if self.model_type == 'logistic' and hasattr(self.model, "warm_start") and self.model.warm_start:
+        if self.model_type in ['logistic', 'random_forest'] and hasattr(self.model, "warm_start") and self.model.warm_start:
             self.model.fit(X_new, y_new, classes=np.unique(y_new))
         elif self.model_type == 'knn':
             X = np.vstack([self.model.knn_model._fit_X, X_new])
@@ -170,13 +180,13 @@ class ModelTrainer:
             }
             model = LogisticRegression()
 
-        elif self.model_type == 'tree':
+        elif self.model_type == 'random_forest':
             param_grid = {
+                'n_estimators': [50, 150, 250],
                 'max_depth': [3, 5, 7],
-                'min_samples_split': [2, 5, 10],
-                'criterion': ['gini', 'entropy']
+                'min_samples_split': [2, 5, 10]
             }
-            model = DecisionTreeClassifier()
+            model = RandomForestClassifier()
 
         elif self.model_type == 'knn':
             param_grid = {
@@ -243,13 +253,13 @@ class ModelTrainer:
             }
             model = LogisticRegression()
 
-        elif self.model_type == 'tree':
+        elif self.model_type == 'random_forest':
             param_grid = {
-                'model__max_depth': [3, 5, 7],
-                'model__min_samples_split': [2, 5, 10],
-                'model__criterion': ['gini', 'entropy']
+                'n_estimators': [50, 150, 250],
+                'max_depth': [3, 5, 7],
+                'min_samples_split': [2, 5, 10]
             }
-            model = DecisionTreeClassifier()
+            model = RandomForestClassifier()
 
         elif self.model_type == 'knn':
             param_grid = {
@@ -339,3 +349,115 @@ class ModelTrainer:
             json.dump(summary, f)
             
         return summary_path
+
+    def detect_model_drift(self, X_new, y_new):
+        """Обнаружение дрифта модели по изменению метрик"""
+        y_pred = model.predict(X_new)
+        current_accuracy = accuracy_score(y_new, y_pred)
+        
+        if len(self.metrics_for_drift_det) == 0:
+            self.metrics_for_drift_det.append(current_accuracy)
+            return False
+        
+        median_accuracy = np.median(self.metric_history)
+        self.metric_history.append(current_accuracy)
+        
+        return current_accuracy < median_accuracy * 0.90
+
+    def interpretation_model(self, X, y=None, sample_size=100):
+        """Интерпретация модели в зависимости от типа"""
+        if sample_size < len(X):
+            sample_idx = np.random.choice(len(X), sample_size, replace=False)
+            X_sample = X[sample_idx]
+        else:
+            X_sample = X
+            
+        if self.model_type == 'random_forest':
+            self._plot_feature_importance()
+        elif self.model_type == 'logistic':
+            self.plot_logistic_coefficients()
+        elif self.model_type == 'knn':
+            self.plot_nearest_neighbors(X_sample)
+            
+        # Общие методы интерпретации
+        # self.shap_analysis(X_sample)
+        self.lime_analysis(X_sample[0])
+
+    def lime_analysis(self, instance):
+        """LIME анализ для интерпретации предсказаний"""
+        try:
+            explainer = lime.lime_tabular.LimeTabularExplainer(
+                training_data=np.zeros((2, len(instance))) if self.best_model.X_train is None else self.best_model.X_train,
+                feature_names=self.feature_names,
+                class_names=self.class_names,
+                mode='classification'
+            )
+            
+            exp = explainer.explain_instance(
+                instance, 
+                self.best_model.predict_proba, 
+                num_features=5
+            )
+            
+            plot_path = os.path.join('reports', 'lime_explanation.html')
+            exp.save_to_file(plot_path)
+            print(f"LIME analysis saved to {plot_path}")
+        
+        except Exception as e:
+            print(f"LIME analysis failed: {str(e)}")
+
+    def _plot_feature_importance(self):
+        """Визуализация важности признаков для Random Forest"""
+        if self.model_type != 'random_forest':
+            return
+            
+        importances = self.best_model.feature_importances_
+        indices = np.argsort(importances)[::-1]
+        
+        plt.figure(figsize=(10, 6))
+        plt.title("Feature Importance - Random Forest")
+        plt.barh(range(len(indices)), importances[indices], align='center')
+        plt.yticks(range(len(indices)), [self.feature_names[i] for i in indices])
+        plt.xlabel("Relative Importance")
+        
+        plot_path = os.path.join('reports', 'feature_importance.png')
+        plt.savefig(plot_path, bbox_inches='tight')
+        plt.close()
+        print(f"Feature importance plot saved to {plot_path}")
+
+    def _plot_logistic_coefficients(self):
+        """Визуализация коэффициентов логистической регрессии"""
+        if self.model_type != 'logistic':
+            return
+            
+        coefs = pd.DataFrame({
+            'feature': self.feature_names,
+            'coefficient': self.best_model.coef_[0]
+        }).sort_values('coefficient', ascending=False)
+        
+        plt.figure(figsize=(10, 6))
+        plt.barh(coefs['feature'], coefs['coefficient'])
+        plt.title('Logistic Regression Coefficients')
+        plt.xlabel('Coefficient value')
+        plot_path = os.path.join('reports', 'logistic_coefficients.png')
+        plt.savefig(plot_path)
+        plt.close()
+        print(f"Logistic coefficients visualization saved to {plot_path}")
+    
+    def _plot_nearest_neighbors(self, X_sample):
+        """Визуализация ближайших соседей для KNN"""
+        if self.model_type != 'knn':
+            return
+            
+        # Получаем индексы ближайших соседей для первого примера
+        distances, indices = self.best_model.kneighbors(X_sample[:1])
+        
+        # Создаем DataFrame для визуализации
+        neighbors_df = pd.DataFrame(X_sample[indices[0]], 
+                                 columns=self.feature_names)
+        neighbors_df['distance'] = distances[0]
+        
+        # Сохраняем в файл
+        neighbors_path = os.path.join('reports', 'nearest_neighbors.csv')
+        neighbors_df.to_csv(neighbors_path, index=False)
+        print(f"Nearest neighbors saved to {neighbors_path}")
