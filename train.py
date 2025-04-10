@@ -53,8 +53,17 @@ class ModelTrainer:
         if self.best_model is None:
             self.best_model = self.model 
 
+        y_pred = self.model.predict(X_train)
+        accuracy = accuracy_score(y_train, y_pred)
+        f1 = f1_score(y_train, y_pred)
+
+        metrics = {
+            'accuracy' : accuracy,
+            'f1_score' : f1
+        }
+
         # self.models['initial'] = model
-        return self.model
+        return self.model, metrics
     
     def update_model(self, X_new, y_new):
         """Дообучение модели на новых данных"""
@@ -66,8 +75,17 @@ class ModelTrainer:
             self.model.fit(X, y)
         else:
             raise ValueError("Unsupported")
+
+        y_pred = self.model.predict(X_new)
+        accuracy = accuracy_score(y_new, y_pred)
+        f1 = f1_score(y_new, y_pred)
+
+        metrics = {
+            'accuracy' : accuracy,
+            'f1_score' : f1
+        }
             
-        return self.model
+        return self.model, metrics
     
     def validate_model(self, X_test, y_test):
         """Валидация модели и сохранение результатов"""
@@ -197,8 +215,17 @@ class ModelTrainer:
         
         # Сохраняем результаты подбора
         self.save_hyperparam_report(grid_search.cv_results_)
+
+        y_pred = self.model.predict(X)
+        accuracy = accuracy_score(y, y_pred)
+        f1 = f1_score(y, y_pred)
+
+        metrics = {
+            'accuracy' : accuracy,
+            'f1_score' : f1
+        }
         
-        return grid_search.best_params_
+        return grid_search.best_params_, metrics
     
     def hyperparameter_tuning_with_preproc(self, X, y, preproc, grid=None, val='CV'):
         """Подбор гиперпараметров с временной кросс-валидацией"""
@@ -210,30 +237,33 @@ class ModelTrainer:
 
         if self.model_type == 'logistic':
             param_grid = {
-                'C': [0.1, 1, 10],
-                'penalty': ['l1', 'l2'],
-                'solver': ['liblinear']
+                'model__C': [0.1, 1, 10],
+                'model__penalty': ['l1', 'l2'],
+                'model__solver': ['liblinear']
             }
             model = LogisticRegression()
 
         elif self.model_type == 'tree':
             param_grid = {
-                'max_depth': [3, 5, 7],
-                'min_samples_split': [2, 5, 10],
-                'criterion': ['gini', 'entropy']
+                'model__max_depth': [3, 5, 7],
+                'model__min_samples_split': [2, 5, 10],
+                'model__criterion': ['gini', 'entropy']
             }
             model = DecisionTreeClassifier()
 
         elif self.model_type == 'knn':
             param_grid = {
-                'n_neighbors': [3, 5, 7],
-                'weights': ['uniform', 'distance'],
-                'metric': ['euclidean', 'manhattan']
+                'model__n_neighbors': [3, 5, 7],
+                'model__weights': ['uniform', 'distance'],
+                'model__metric': ['euclidean', 'manhattan']
             }
             model = KNeighborsClassifier()
 
         if grid is None:
             grid = param_grid
+        else:
+            grid.update(param_grid)
+
         
         grid_search = GridSearchCV(
                     make_pipeline(preproc, model),
@@ -264,8 +294,17 @@ class ModelTrainer:
         
         # Сохраняем результаты подбора
         self.save_hyperparam_report(grid_search.cv_results_)
+
+        y_pred = self.model.predict(X)
+        accuracy = accuracy_score(y, y_pred)
+        f1 = f1_score(y, y_pred)
+
+        metrics = {
+            'accuracy' : accuracy,
+            'f1_score' : f1
+        }
         
-        return grid_search.best_params_
+        return grid_search.best_params_, metrics
 
     def save_hyperparam_report(self, cv_results):
         """Сохранение отчета по подбору гиперпараметров"""
