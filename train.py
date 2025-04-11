@@ -5,27 +5,29 @@ import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.metrics import accuracy_score, f1_score
+from sklearn.metrics import accuracy_score, balanced_accuracy_score, f1_score
 from sklearn.model_selection import TimeSeriesSplit, GridSearchCV, cross_val_score
+from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.preprocessing import StandardScaler
 from datetime import datetime
 import matplotlib.pyplot as plt
 import json
 import lime
 import lime.lime_tabular
+from sklearn.tree import DecisionTreeClassifier
 
 class ModelTrainer:
     def __init__(self, config_path='config.json'):
         self.model = None
         self.best_model = None
-        self.name_of_best = None
         self.history = []
-        self.n_splits = 5
+        self.n_splits = 3
         self.load_config(config_path)
         self.init_storage()
         self.metrics_for_drift_det = []
         self.feature_names = None
         self.class_names = None
+        self.load_best_model()
         
     def set_feature_info(self, feature_names, class_names):
         """Установка имен признаков и классов для интерпретации"""
@@ -44,7 +46,7 @@ class ModelTrainer:
     def init_storage(self):
         """Инициализация хранилища моделей и метрик"""
         os.makedirs('models', exist_ok=True)
-        os.makedirs('reports', exist_ok=True)
+        os.makedirs(f'reports_{self.model_type}', exist_ok=True)
         
     def train_initial_model(self, X_train, y_train):
         """Первоначальное обучение модели"""
@@ -65,10 +67,12 @@ class ModelTrainer:
 
         y_pred = self.model.predict(X_train)
         accuracy = accuracy_score(y_train, y_pred)
+        balanced_accuracy = balanced_accuracy_score(y_train, y_pred)
         f1 = f1_score(y_train, y_pred)
 
         metrics = {
             'accuracy' : accuracy,
+            'balanced_accuracy': balanced_accuracy,
             'f1_score' : f1
         }
 
@@ -88,10 +92,12 @@ class ModelTrainer:
 
         y_pred = self.model.predict(X_new)
         accuracy = accuracy_score(y_new, y_pred)
+        balanced_accuracy = balanced_accuracy_score(y_new, y_pred)
         f1 = f1_score(y_new, y_pred)
 
         metrics = {
             'accuracy' : accuracy,
+            'balanced_accuracy': balanced_accuracy,
             'f1_score' : f1
         }
             
@@ -122,6 +128,10 @@ class ModelTrainer:
             
         return metrics
     
+    def predict(self, X_test):
+        """Применение лучшей модели"""
+        return (self.best_model if self.best_model else self.model).predict(X_test)
+
     def save_model(self, metrics, best=False):
         """Сохранение модели и метрик"""
         model_name = f"model_{self.model_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pkl"
@@ -136,7 +146,7 @@ class ModelTrainer:
             }, f)
             
         # Сохраняем историю метрик
-        history_path = os.path.join('reports', 'metrics_history.json')
+        history_path = os.path.join(f'reports_{self.model_type}', 'metrics_history.json')
         with open(history_path, 'w') as f:
             json.dump(self.history, f)
 
@@ -164,13 +174,24 @@ class ModelTrainer:
             self.hyperparams = tmp['hyperparams']
             self.model_type = tmp['model_type']
     
+    def load_best_model(self):
+        model_path = os.path.join('models', f"best_{self.model_type}.pkl")
+
+        if os.path.exists(model_path):
+            with open(model_path, 'rb') as f:
+                tmp = pickle.load(f)
+                self.model = tmp['model']
+                self.best_model = self.model
+                self.hyperparams = tmp['hyperparams']
+                self.model_type = tmp['model_type']
+
     def hyperparameter_tuning(self, X, y, val='CV'):
         """Подбор гиперпараметров с временной кросс-валидацией"""
 
         if val == 'CV':
             cv = self.n_splits
         else:
-            cv = TimSeriesSplit(n_splits=self.n_splits)
+            cv = TimeSeriesSplit(n_splits=self.n_splits)
 
         if self.model_type == 'logistic':
             param_grid = {
@@ -200,7 +221,7 @@ class ModelTrainer:
             estimator=model,
             param_grid=param_grid,
             cv=cv,
-            scoring='accuracy',
+            scoring='balanced_accuracy',
             n_jobs=-1
         )
         
@@ -209,16 +230,17 @@ class ModelTrainer:
         # Обновляем лучшие параметры
         self.hyperparams = grid_search.best_params_
         self.model = grid_search.best_estimator_
-        accuracy = grid_search.best_score_
+        self.best_score = accuracy = grid_search.best_score_
+        
 
-        accuracy_b = cross_val_score(self.best_model, X, y, cv=self.n_splits, scoring='accuracy').mean()
+        accuracy_b = cross_val_score(self.best_model, X, y, cv=self.n_splits, scoring='balanced_accuracy', n_jobs=-1).mean()
 
         if accuracy > accuracy_b:
             self.best_model = self.model
 
             metrics = {
                 'timestamp': datetime.now().isoformat(),
-                'accuracy': accuracy
+                'balanced_accuracy': accuracy
             }
 
             self.save_model(metrics, best=True)
@@ -228,10 +250,12 @@ class ModelTrainer:
 
         y_pred = self.model.predict(X)
         accuracy = accuracy_score(y, y_pred)
+        balanced_accuracy = balanced_accuracy_score(Y, y_pred)
         f1 = f1_score(y, y_pred)
 
         metrics = {
             'accuracy' : accuracy,
+            'balanced_accuracy': balanced_accuracy,
             'f1_score' : f1
         }
         
@@ -243,13 +267,13 @@ class ModelTrainer:
         if val == 'CV':
             cv = self.n_splits
         else:
-            cv = TimSeriesSplit(n_splits=self.n_splits)
+            cv = TimeSeriesSplit(n_splits=self.n_splits)
 
         if self.model_type == 'logistic':
             param_grid = {
-                'model__C': [0.1, 1, 10],
-                'model__penalty': ['l1', 'l2'],
-                'model__solver': ['liblinear']
+                'C': [0.1, 1, 10],
+                'penalty': ['l1', 'l2'],
+                'solver': ['liblinear']
             }
             model = LogisticRegression()
 
@@ -263,11 +287,13 @@ class ModelTrainer:
 
         elif self.model_type == 'knn':
             param_grid = {
-                'model__n_neighbors': [3, 5, 7],
-                'model__weights': ['uniform', 'distance'],
-                'model__metric': ['euclidean', 'manhattan']
+                'n_neighbors': [3, 5, 7],
+                # 'weights': ['uniform', 'distance'],
+                # 'metric': ['euclidean', 'manhattan']
             }
             model = KNeighborsClassifier()
+
+        param_grid = {'model__' + k: v for k, v in param_grid.items()}
 
         if grid is None:
             grid = param_grid
@@ -276,28 +302,32 @@ class ModelTrainer:
 
         
         grid_search = GridSearchCV(
-                    make_pipeline(preproc, model),
+                    Pipeline(steps=preproc.steps + [('model', model)]),
                     param_grid=grid,
                     cv=cv,
-                    scoring='accuracy',
-                    n_jobs=-1)
+                    scoring='balanced_accuracy',
+                    n_jobs=-1,
+                    verbose=1)
         grid_search.fit(X, y)
-        
+
         # Обновляем лучшие параметры
         self.hyperparams = grid_search.best_params_
-        self.model = grid_search.best_estimator_
-        accuracy = grid_search.best_score_
+        self.model = grid_search.best_estimator_.steps[-1][1]
+        self.best_score = accuracy = grid_search.best_score_
 
-        accuracy_b = cross_val_score(
-            make_pipeline(preproc, self.best_model), X, y,
-            cv=self.n_splits, scoring='accuracy').mean()
+        if self.best_model:
+            accuracy_b = cross_val_score(
+                make_pipeline(preproc, self.best_model), X, y,
+                cv=self.n_splits, scoring='balanced_accuracy', n_jobs=-1).mean()
+        else:
+            accuracy_b = accuracy - 1
 
         if accuracy > accuracy_b:
             self.best_model = self.model
 
             metrics = {
                 'timestamp': datetime.now().isoformat(),
-                'accuracy': accuracy
+                'balanced_accuracy': accuracy
             }
 
             self.save_model(metrics, best=True)
@@ -305,12 +335,15 @@ class ModelTrainer:
         # Сохраняем результаты подбора
         self.save_hyperparam_report(grid_search.cv_results_)
 
-        y_pred = self.model.predict(X)
+        
+        y_pred = grid_search.best_estimator_.predict(X)
         accuracy = accuracy_score(y, y_pred)
+        balanced_accuracy = balanced_accuracy_score(y, y_pred)
         f1 = f1_score(y, y_pred)
 
         metrics = {
             'accuracy' : accuracy,
+            'balanced_accuracy': balanced_accuracy,
             'f1_score' : f1
         }
         
@@ -322,15 +355,15 @@ class ModelTrainer:
             'timestamp': datetime.now().isoformat(),
             'best_score': self.best_score,
             'best_params': self.hyperparams,
-            'all_results': cv_results
+            # 'all_results': cv_results #TODO: rewrite using some other json library (orjson?) or convert numpy arrays to lists
         }
         
-        report_path = os.path.join('reports', 'hyperparam_tuning.json')
+        report_path = os.path.join(f'reports_{self.model_type}', 'hyperparam_tuning.json')
         with open(report_path, 'w') as f:
             json.dump(report, f)
         
-        # Визуализация
-        self.plot_hyperparam_results(cv_results)
+        # Визуализация (и она тут не существует?)
+        # self.plot_hyperparam_results(cv_results)
     
     def generate_summary(self):
         """Генерация отчета о работе модели"""
@@ -344,7 +377,7 @@ class ModelTrainer:
             'last_update': datetime.now().isoformat()
         }
         
-        summary_path = os.path.join('reports', 'model_summary.json')
+        summary_path = os.path.join(f'reports_{self.model_type}', 'model_summary.json')
         with open(summary_path, 'w') as f:
             json.dump(summary, f)
             
@@ -352,7 +385,7 @@ class ModelTrainer:
 
     def detect_model_drift(self, X_new, y_new):
         """Обнаружение дрифта модели по изменению метрик"""
-        y_pred = model.predict(X_new)
+        y_pred = self.model.predict(X_new)
         current_accuracy = accuracy_score(y_new, y_pred)
         
         if len(self.metrics_for_drift_det) == 0:
@@ -364,7 +397,7 @@ class ModelTrainer:
         
         return current_accuracy < median_accuracy * 0.90
 
-    def interpretation_model(self, X, y=None, sample_size=100):
+    def interpret_model(self, X, y=None, sample_size=1000):
         """Интерпретация модели в зависимости от типа"""
         if sample_size < len(X):
             sample_idx = np.random.choice(len(X), sample_size, replace=False)
@@ -375,19 +408,20 @@ class ModelTrainer:
         if self.model_type == 'random_forest':
             self._plot_feature_importance()
         elif self.model_type == 'logistic':
-            self.plot_logistic_coefficients()
+            self._plot_logistic_coefficients()
         elif self.model_type == 'knn':
-            self.plot_nearest_neighbors(X_sample)
+            self._plot_nearest_neighbors(X_sample, X_train=X)
             
         # Общие методы интерпретации
         # self.shap_analysis(X_sample)
-        self.lime_analysis(X_sample[0])
+        self.lime_analysis(X_sample[0], X)
 
-    def lime_analysis(self, instance):
+    def lime_analysis(self, instance, X_train=None):
         """LIME анализ для интерпретации предсказаний"""
         try:
             explainer = lime.lime_tabular.LimeTabularExplainer(
-                training_data=np.zeros((2, len(instance))) if self.best_model.X_train is None else self.best_model.X_train,
+               # training_data=np.zeros((2, len(instance))) if self.best_model.X_train is None else self.best_model.X_train,
+                training_data=X_train,
                 feature_names=self.feature_names,
                 class_names=self.class_names,
                 mode='classification'
@@ -399,7 +433,7 @@ class ModelTrainer:
                 num_features=5
             )
             
-            plot_path = os.path.join('reports', 'lime_explanation.html')
+            plot_path = os.path.join(f'reports_{self.model_type}', 'lime_explanation.html')
             exp.save_to_file(plot_path)
             print(f"LIME analysis saved to {plot_path}")
         
@@ -420,31 +454,34 @@ class ModelTrainer:
         plt.yticks(range(len(indices)), [self.feature_names[i] for i in indices])
         plt.xlabel("Relative Importance")
         
-        plot_path = os.path.join('reports', 'feature_importance.png')
+        plot_path = os.path.join(f'reports_{self.model_type}', 'feature_importance.png')
         plt.savefig(plot_path, bbox_inches='tight')
         plt.close()
         print(f"Feature importance plot saved to {plot_path}")
 
-    def _plot_logistic_coefficients(self):
+    def _plot_logistic_coefficients(self, threshold=0):
         """Визуализация коэффициентов логистической регрессии"""
         if self.model_type != 'logistic':
             return
-            
+
         coefs = pd.DataFrame({
             'feature': self.feature_names,
             'coefficient': self.best_model.coef_[0]
         }).sort_values('coefficient', ascending=False)
-        
+
+        coefs = coefs[coefs['coefficient'].abs() >= threshold]
+
         plt.figure(figsize=(10, 6))
         plt.barh(coefs['feature'], coefs['coefficient'])
         plt.title('Logistic Regression Coefficients')
         plt.xlabel('Coefficient value')
-        plot_path = os.path.join('reports', 'logistic_coefficients.png')
+        plot_path = os.path.join(f'reports_{self.model_type}', 'logistic_coefficients.png')
+        plt.tight_layout()
         plt.savefig(plot_path)
         plt.close()
         print(f"Logistic coefficients visualization saved to {plot_path}")
     
-    def _plot_nearest_neighbors(self, X_sample):
+    def _plot_nearest_neighbors(self, X_sample, X_train=None):
         """Визуализация ближайших соседей для KNN"""
         if self.model_type != 'knn':
             return
@@ -453,11 +490,11 @@ class ModelTrainer:
         distances, indices = self.best_model.kneighbors(X_sample[:1])
         
         # Создаем DataFrame для визуализации
-        neighbors_df = pd.DataFrame(X_sample[indices[0]], 
+        neighbors_df = pd.DataFrame(X_train[indices[0]], 
                                  columns=self.feature_names)
         neighbors_df['distance'] = distances[0]
         
         # Сохраняем в файл
-        neighbors_path = os.path.join('reports', 'nearest_neighbors.csv')
+        neighbors_path = os.path.join(f'reports_{self.model_type}', 'nearest_neighbors.csv')
         neighbors_df.to_csv(neighbors_path, index=False)
         print(f"Nearest neighbors saved to {neighbors_path}")

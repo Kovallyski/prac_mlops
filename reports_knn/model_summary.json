@@ -1,0 +1,1 @@
+{"best_model": {"type": "knn", "hyperparams": {"model__n_neighbors": 5}}, "history": [], "last_update": "2025-04-11T05:18:05.738310"}
