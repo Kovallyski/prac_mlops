@@ -122,7 +122,7 @@ class ModelTrainer:
         self.history.append(metrics)
         model_name = None
         # Сохраняем модель если она улучшила метрики
-        if accuracy > accuracy_b:
+        if accuracy >= accuracy_b:
             self.best_model = self.model
             model_name = self.save_model(metrics, best=True)
             
@@ -239,7 +239,7 @@ class ModelTrainer:
 
         model_name = None
 
-        if accuracy > accuracy_b:
+        if accuracy >= accuracy_b:
             self.best_model = self.model
 
             metrics = {
@@ -328,7 +328,7 @@ class ModelTrainer:
 
         model_name = None
 
-        if accuracy > accuracy_b:
+        if accuracy >= accuracy_b:
             self.best_model = self.model
 
             metrics = {
