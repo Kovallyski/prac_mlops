@@ -120,13 +120,13 @@ class ModelTrainer:
         }
         
         self.history.append(metrics)
-        
+        model_name = None
         # Сохраняем модель если она улучшила метрики
         if accuracy > accuracy_b:
             self.best_model = self.model
-            self.save_model(metrics, best=True)
+            model_name = self.save_model(metrics, best=True)
             
-        return metrics
+        return metrics, model_name
     
     def predict(self, X_test):
         """Применение лучшей модели"""
@@ -161,6 +161,8 @@ class ModelTrainer:
                     'model_type': self.model_type,
                     'hyperparams': self.hyperparams
                 }, f)
+
+        return model_name
 
     def load_model(self, name=None):
         if name is None:
@@ -235,6 +237,8 @@ class ModelTrainer:
 
         accuracy_b = cross_val_score(self.best_model, X, y, cv=self.n_splits, scoring='balanced_accuracy', n_jobs=-1).mean()
 
+        model_name = None
+
         if accuracy > accuracy_b:
             self.best_model = self.model
 
@@ -243,7 +247,7 @@ class ModelTrainer:
                 'balanced_accuracy': accuracy
             }
 
-            self.save_model(metrics, best=True)
+            model_name = self.save_model(metrics, best=True)
         
         # Сохраняем результаты подбора
         self.save_hyperparam_report(grid_search.cv_results_)
@@ -259,7 +263,7 @@ class ModelTrainer:
             'f1_score' : f1
         }
         
-        return grid_search.best_params_, metrics
+        return grid_search.best_params_, metrics, model_name
     
     def hyperparameter_tuning_with_preproc(self, X, y, preproc, grid=None, val='CV'):
         """Подбор гиперпараметров с временной кросс-валидацией"""
@@ -322,6 +326,8 @@ class ModelTrainer:
         else:
             accuracy_b = accuracy - 1
 
+        model_name = None
+
         if accuracy > accuracy_b:
             self.best_model = self.model
 
@@ -330,7 +336,7 @@ class ModelTrainer:
                 'balanced_accuracy': accuracy
             }
 
-            self.save_model(metrics, best=True)
+            model_name = self.save_model(metrics, best=True)
         
         # Сохраняем результаты подбора
         self.save_hyperparam_report(grid_search.cv_results_)
@@ -347,7 +353,7 @@ class ModelTrainer:
             'f1_score' : f1
         }
         
-        return grid_search.best_params_, metrics
+        return grid_search.best_params_, metrics, grid_search.best_estimator_.steps[:-1], model_name
 
     def save_hyperparam_report(self, cv_results):
         """Сохранение отчета по подбору гиперпараметров"""

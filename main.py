@@ -21,7 +21,6 @@ def get_args_parser():
     return parser
 
 
-
 def inference(file_path, **kwargs):
     with open("configure.json", 'r') as f:
         db = DataBase(json.load(f))
