@@ -1,4 +1,6 @@
 from numpy import median
+import numpy as np
+import pandas as pd
 
 
 def check_data_quality(df, metadata_df, quantile_df):
@@ -12,12 +14,46 @@ def check_data_quality(df, metadata_df, quantile_df):
     datetime_columns = ['Date']
     index_columns = ['Date', 'Location']
 
-    metadata_df['type'] = metadata_df['type'].astype(str)
-    metadata_df = metadata_df.set_index('type')
+    metadata_df = metadata_df.set_index(['type'])
+    quantile_df = quantile_df.set_index(['type'])
 
-    quantile_df['type'] = quantile_df['type'].astype(str)
-    quantile_df = quantile_df.set_index('type')
+    full_duplicated = df.duplicated()
+    collisions = df[index_columns].duplicated(keep=False) & ~df.duplicated(keep=False)
+    print(f'Detected {full_duplicated.sum()} duplicates and {collisions.sum()} collisions')
+    if full_duplicated.sum() + collisions.sum():
+        df = df.drop(df[full_duplicated].index)
+        df = df.drop(df[collisions].index)
+        print(f'All duplicates and collisions removed')
 
+    new_datetime = pd.to_datetime(df['Date'], errors='coerce')
+    bad_values = new_datetime.isna()
+    if bad_values.sum():
+        print(f"Found values {list(df['Date'][bad_values].unique())} out of range in column Date", end='')
+        df['Date'] = new_datetime
+        df = df.drop(df[bad_values].index)
+        print(', all removed.')
+
+
+    def check_winddir(s):
+        return s.isin(['E', 'SSW', 'NE', 'ENE', 'SE', 'SSE', 'WNW', 'N', 'NW', 'W', 'S', 'SW', 'WSW', 'NNW', 'ESE', 'NNE']) | s.isna()
+
+    def angle(d):
+        if 'E' in d:
+            return (d.count('E') * 0 + d.count('N') * np.pi/2  - d.count('S') * np.pi / 2) / len(d)
+        if 'W' in d:
+            return (d.count('W') * np.pi + d.count('N') * np.pi/2  - d.count('S') * np.pi * 3 / 2) / len(d)
+        return (d.count('N') * np.pi/2  - d.count('S') * np.pi / 2) / len(d)
+
+    for wind_dir in ['WindGustDir', 'WindDir9am', 'WindDir3pm']:
+        bad_values = df[wind_dir][~check_winddir(df[wind_dir])]
+        if bad_values.sum():
+            print(f"Found values {list(bad_values.unique())} out of range in column {wind_dir}, all removed")
+            df.loc[bad_values, wind_dir] = pd.NA
+        df[wind_dir+'_x'] = df[wind_dir].map(lambda d : np.cos(angle(d)), na_action='ignore')
+        df[wind_dir+'_y'] = df[wind_dir].map(lambda d : np.sin(angle(d)), na_action='ignore')
+        df = df.drop(wind_dir, axis=1)
+
+    
     meta_q1 = metadata_df.loc['q1',numeric_columns].T
     meta_q3 = metadata_df.loc['q3',numeric_columns].T
     etal_q1 = quantile_df.loc['q1',numeric_columns].T
@@ -30,6 +66,8 @@ def check_data_quality(df, metadata_df, quantile_df):
     if (iou < 0.5).sum() > 1:
         print('DataDrift detected')
     
+
+
     score = 1 - (iou < 0.5).mean()
     
     return df, metadata_df, score
