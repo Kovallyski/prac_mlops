@@ -35,11 +35,14 @@ project/
 
 #### 2. **Анализ данных** (`eda.py`)
 - Качество данных: пропуски, уникальные значения, типы.
+- Мониторинг data drift.
+- Превращает направления в координаты.
 
 #### 3. **Подготовка данных** (`preprocessing.py`)
 - Импутация пропусков (среднее/мода).
 - One-Hot Encoding для категорий.
 - Масштабирование числовых признаков.
+- (TODO: выбор колонок и строк по их качеству)
 
 #### 4. **Обучение и оценка моделей + их обслуживание** (`train.py`)
 - Поддержка: `LogisticRegression`, `KNN`, `RandomForest`.
@@ -55,8 +58,8 @@ project/
 ### 🚀 **Команды запуска (run.py)**
 
 ```bash
-python run.py -mode "inference" -file test.csv
-python run.py -mode "update"
-python run.py -mode "summary"
-python run.py -mode "add_file" -file ".input_data/new_batch.csv"
+python run.py --mode "inference" --file test.csv
+python run.py --mode "update"
+python run.py --mode "summary"
+python run.py --mode "add_file" --file ".input_data/new_batch.csv"
 ```
