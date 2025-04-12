@@ -45,7 +45,7 @@ class ModelTrainer:
         
     def init_storage(self):
         """Инициализация хранилища моделей и метрик"""
-        os.makedirs('models', exist_ok=True)
+        os.makedirs(f'models_{self.model_type}', exist_ok=True)
         os.makedirs(f'reports_{self.model_type}', exist_ok=True)
         
     def train_initial_model(self, X_train, y_train):
@@ -81,8 +81,9 @@ class ModelTrainer:
     
     def update_model(self, X_new, y_new):
         """Дообучение модели на новых данных"""
+        print(self.model.warm_start)
         if self.model_type in ['logistic', 'random_forest'] and hasattr(self.model, "warm_start") and self.model.warm_start:
-            self.model.fit(X_new, y_new, classes=np.unique(y_new))
+            self.model.fit(X_new, y_new)
         elif self.model_type == 'knn':
             X = np.vstack([self.model.knn_model._fit_X, X_new])
             y = np.concatenate([self.model._y, y_new])
@@ -135,7 +136,7 @@ class ModelTrainer:
     def save_model(self, metrics, best=False):
         """Сохранение модели и метрик"""
         model_name = f"model_{self.model_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pkl"
-        model_path = os.path.join('models', model_name)
+        model_path = os.path.join(f'models_{self.model_type}', model_name)
         
         with open(model_path, 'wb') as f:
             pickle.dump({
@@ -152,7 +153,7 @@ class ModelTrainer:
 
         if best:
             model_name = f"best_{self.model_type}.pkl"
-            model_path = os.path.join('models', model_name)
+            model_path = os.path.join(f'models_{self.model_type}', model_name)
         
             with open(model_path, 'wb') as f:
                 pickle.dump({
@@ -166,9 +167,9 @@ class ModelTrainer:
 
     def load_model(self, name=None):
         if name is None:
-            model_path = os.path.join('models', f"best_{self.model_type}.pkl")
+            model_path = os.path.join(f'models_{self.model_type}', f"best_{self.model_type}.pkl")
         else:
-            model_path = os.path.join('models', name)
+            model_path = os.path.join(f'models_{self.model_type}', name)
 
         with open(model_path, 'rb') as f:
             tmp = pickle.load(f)
@@ -177,7 +178,7 @@ class ModelTrainer:
             self.model_type = tmp['model_type']
     
     def load_best_model(self):
-        model_path = os.path.join('models', f"best_{self.model_type}.pkl")
+        model_path = os.path.join(f'models_{self.model_type}', f"best_{self.model_type}.pkl")
 
         if os.path.exists(model_path):
             with open(model_path, 'rb') as f:
@@ -186,8 +187,10 @@ class ModelTrainer:
                 self.best_model = self.model
                 self.hyperparams = tmp['hyperparams']
                 self.model_type = tmp['model_type']
+        
+        return f"best_{self.model_type}.pkl"
 
-    def hyperparameter_tuning(self, X, y, val='CV'):
+    def hyperparameter_tuning(self, X, y, val='CV', force_save=True):
         """Подбор гиперпараметров с временной кросс-валидацией"""
 
         if val == 'CV':
@@ -201,7 +204,7 @@ class ModelTrainer:
                 'penalty': ['l1', 'l2'],
                 'solver': ['liblinear']
             }
-            model = LogisticRegression()
+            model = LogisticRegression(warm_start=True)
 
         elif self.model_type == 'random_forest':
             param_grid = {
@@ -209,7 +212,7 @@ class ModelTrainer:
                 'max_depth': [3, 5, 7],
                 'min_samples_split': [2, 5, 10]
             }
-            model = RandomForestClassifier()
+            model = RandomForestClassifier(warm_start=True)
 
         elif self.model_type == 'knn':
             param_grid = {
@@ -235,7 +238,11 @@ class ModelTrainer:
         self.best_score = accuracy = grid_search.best_score_
         
 
-        accuracy_b = cross_val_score(self.best_model, X, y, cv=self.n_splits, scoring='balanced_accuracy', n_jobs=-1).mean()
+        
+        if self.best_model or not force_save:
+            accuracy_b = cross_val_score(self.best_model, X, y, cv=self.n_splits, scoring='balanced_accuracy', n_jobs=-1, verbose=1).mean()
+        else:
+            accuracy_b = accuracy - 1
 
         model_name = None
 
@@ -254,7 +261,7 @@ class ModelTrainer:
 
         y_pred = self.model.predict(X)
         accuracy = accuracy_score(y, y_pred)
-        balanced_accuracy = balanced_accuracy_score(Y, y_pred)
+        balanced_accuracy = balanced_accuracy_score(y, y_pred)
         f1 = f1_score(y, y_pred)
 
         metrics = {
@@ -265,7 +272,7 @@ class ModelTrainer:
         
         return grid_search.best_params_, metrics, model_name
     
-    def hyperparameter_tuning_with_preproc(self, X, y, preproc, grid=None, val='CV'):
+    def hyperparameter_tuning_with_preproc(self, X, y, preproc, grid=None, val='CV', force_save=True):
         """Подбор гиперпараметров с временной кросс-валидацией"""
 
         if val == 'CV':
@@ -279,7 +286,7 @@ class ModelTrainer:
                 'penalty': ['l1', 'l2'],
                 'solver': ['liblinear']
             }
-            model = LogisticRegression()
+            model = LogisticRegression(warm_start=True)
 
         elif self.model_type == 'random_forest':
             param_grid = {
@@ -287,7 +294,7 @@ class ModelTrainer:
                 'max_depth': [3, 5, 7],
                 'min_samples_split': [2, 5, 10]
             }
-            model = RandomForestClassifier()
+            model = RandomForestClassifier(warm_start=True)
 
         elif self.model_type == 'knn':
             param_grid = {
@@ -311,7 +318,8 @@ class ModelTrainer:
                     cv=cv,
                     scoring='balanced_accuracy',
                     n_jobs=-1,
-                    verbose=1)
+                    verbose=1,
+                    refit=True)
         grid_search.fit(X, y)
 
         # Обновляем лучшие параметры
@@ -319,7 +327,7 @@ class ModelTrainer:
         self.model = grid_search.best_estimator_.steps[-1][1]
         self.best_score = accuracy = grid_search.best_score_
 
-        if self.best_model:
+        if self.best_model or not force_save:
             accuracy_b = cross_val_score(
                 make_pipeline(preproc, self.best_model), X, y,
                 cv=self.n_splits, scoring='balanced_accuracy', n_jobs=-1).mean()

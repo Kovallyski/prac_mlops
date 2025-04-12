@@ -135,19 +135,24 @@ class DataBase:
             df = self.df.copy()
             metadata_df = self.metadata_df.copy()
 
-        return df.drop(['batchid', 'known'], axis=1), metadata_df.drop('batchid', axis=1), self.quantile_df.copy()
+
+        cur_df = df.drop(['batchid', 'known'], axis=1)
+        return cur_df, self.__get_metadata(cur_df), metadata_df.drop('batchid', axis=1), self.quantile_df.copy()
 
     def get_unknown(self):
-        return self.df[~self.df['known']]['batchid'].unique()
+        return sorted(set(self.df[~self.df['known']]['batchid']))
+    
+    def get_known(self):
+        return sorted(set(self.df[self.df['known']]['batchid']))
 
     def set_known(self, batchids=None):
         if batchids is not None:
             for batchid in batchids:
-                self.df.loc[self.df['batchid']==batchid, 'known'] = True
+                self.df[self.df['batchid']==batchid]['known'] = True
         else:
-            self.df.loc['known'] = True
+            self.df['known'] = True
 
 
         self.quantile_df = self.__get_metadata(self.df.drop(['batchid', 'known'], axis=1))
         self.quantile_df.to_csv(self.quantile_path, index=False)
-        
+        self.df.to_csv(self.path, index=False)

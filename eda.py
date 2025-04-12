@@ -17,6 +17,7 @@ def check_data_quality(df, metadata_df, quantile_df):
     metadata_df = metadata_df.set_index(['type'])
     quantile_df = quantile_df.set_index(['type'])
 
+
     full_duplicated = df.duplicated()
     collisions = df[index_columns].duplicated(keep=False) & ~df.duplicated(keep=False)
     print(f'Detected {full_duplicated.sum()} duplicates and {collisions.sum()} collisions')
@@ -58,16 +59,13 @@ def check_data_quality(df, metadata_df, quantile_df):
     meta_q3 = metadata_df.loc['q3',numeric_columns].T
     etal_q1 = quantile_df.loc['q1',numeric_columns].T
     etal_q3 = quantile_df.loc['q3',numeric_columns].T
+
     iou = (meta_q1.combine(etal_q1, min) - meta_q3.combine(etal_q3, max)) / (meta_q1 - meta_q3)
     iou = iou.combine(0, max)
     print(f'Intersection in numeric data:')
     for name in numeric_columns:
         print(f'{name} : {iou[name]}')
-    if (iou < 0.5).sum() > 1:
-        print('DataDrift detected')
-    
 
-
-    score = 1 - (iou < 0.5).mean()
+    score = 1 - (iou < 2 / 3).mean()
     
     return df, metadata_df, score

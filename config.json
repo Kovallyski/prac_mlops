@@ -1,3 +1,6 @@
 {
-    "model_type": "logistic"
+    "model_type": "logistic",
+    "database_path": "database/data.csv",
+    "quantile_path": "database/quantiles.csv",
+    "metadata_path": "database/metadata.csv"
 }

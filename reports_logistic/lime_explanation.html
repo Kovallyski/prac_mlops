@@ -37089,25 +37089,25 @@
 /***/ })
 /******/ ]);
 //# sourceMappingURL=bundle.js.map </script></head><body>
-        <div class="lime top_div" id="top_divVLH5I7ZF1IXMLY5"></div>
+        <div class="lime top_div" id="top_divE8GBK67V4L7GMS4"></div>
         
         <script>
-        var top_div = d3.select('#top_divVLH5I7ZF1IXMLY5').classed('lime top_div', true);
+        var top_div = d3.select('#top_divE8GBK67V4L7GMS4').classed('lime top_div', true);
         
             var pp_div = top_div.append('div')
                                 .classed('lime predict_proba', true);
             var pp_svg = pp_div.append('svg').style('width', '100%');
-            var pp = new lime.PredictProba(pp_svg, ["No", "Yes"], [0.9764180566800117, 0.02358194331998827]);
+            var pp = new lime.PredictProba(pp_svg, ["No", "Yes"], [0.9637651174305277, 0.036234882569472264]);
             
         
         var exp_div;
             var exp = new lime.Explanation(["No", "Yes"]);
         
                 exp_div = top_div.append('div').classed('lime explanation', true);
-                exp.show([["scaler__Pressure3pm > 0.59", -0.2249432390550007], ["scaler__Pressure9am > 0.58", 0.1756571044718038], ["-0.70 < scaler__Humidity3pm <= 0.00", -0.09180748845162874], ["scaler__Sunshine <= -0.00", 0.0804183466544439], ["rain_today__RainToday_Yes <= 0.00", 0.06282348952350025]], 1, exp_div);
+                exp.show([["scaler__Pressure3pm <= -0.69", 0.24800521309147505], ["scaler__MaxTemp > 0.70", -0.15890311474860427], ["scaler__Pressure9am <= -0.66", -0.15480860925905227], ["scaler__MinTemp > 0.70", 0.10583973199200977], ["rain_today__RainToday_Yes <= 0.00", 0.10010780149479545]], 1, exp_div);
                 
         var raw_div = top_div.append('div');
-            exp.show_raw_tabular([["scaler__Pressure3pm", "1.33", -0.2249432390550007], ["scaler__Pressure9am", "0.82", 0.1756571044718038], ["scaler__Humidity3pm", "-0.60", -0.09180748845162874], ["scaler__Sunshine", "-0.19", 0.0804183466544439], ["rain_today__RainToday_Yes", "0.00", 0.06282348952350025]], 1, raw_div);
+            exp.show_raw_tabular([["scaler__Pressure3pm", "-0.83", 0.24800521309147505], ["scaler__MaxTemp", "1.36", -0.15890311474860427], ["scaler__Pressure9am", "-0.97", -0.15480860925905227], ["scaler__MinTemp", "1.02", 0.10583973199200977], ["rain_today__RainToday_Yes", "0.00", 0.10010780149479545]], 1, raw_div);
         
         </script>
         </body></html>
