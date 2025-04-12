@@ -191,7 +191,7 @@ class ModelTrainer:
         return f"best_{self.model_type}.pkl"
 
     def hyperparameter_tuning(self, X, y, val='CV', force_save=True):
-        """Подбор гиперпараметров с временной кросс-валидацией"""
+        """Подбор гиперпараметров с кросс-валидацией"""
 
         if val == 'CV':
             cv = self.n_splits
@@ -273,7 +273,7 @@ class ModelTrainer:
         return grid_search.best_params_, metrics, model_name
     
     def hyperparameter_tuning_with_preproc(self, X, y, preproc, grid=None, val='CV', force_save=True):
-        """Подбор гиперпараметров с временной кросс-валидацией"""
+        """Подбор гиперпараметров и препроцессинга с кросс-валидацией"""
 
         if val == 'CV':
             cv = self.n_splits
