@@ -28,20 +28,17 @@ def inference(file_path, **kwargs):
     with open("config.json", 'r') as f:
         db = DataBase(json.load(f))
 
-    # TODO: should actually store the preprocessor in the model pipeline
-    df, metadata, quantile = db.get_data()
-    X, y = pre_preprocess_data(df, metadata)
-    preproc = create_preprocessor(X, metadata).fit(X)
+    mt = ModelTrainer()
+    model_name = mt.load_best_model()
+    with open(os.path.join(preprocessing.PREPROC_PATH, model_name), 'rb') as f:
+        preproc = pickle.load(f)
 
     df, metadata = db.load_test(file_path)
+    df, metadata, _ = check_data_quality(df, metadata, metadata)
     X = pre_preprocess_data(df, metadata, test=True)
     X = preproc.transform(X)
-
-    mt = ModelTrainer()
-    mt.load_best_model()
     preds = mt.predict(X)
-
-
+    
     df = pd.read_csv(file_path)
     df['predict'] = [['No', 'Yes'][x] for x in preds]
     save_path = file_path[:-4] + '_with_predictions.csv'
