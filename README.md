@@ -58,8 +58,8 @@ project/
 ### 🚀 **Команды запуска (run.py)**
 
 ```bash
-python run.py --mode "inference" --file test.csv
-python run.py --mode "update"
-python run.py --mode "summary"
-python run.py --mode "add_file" --file ".input_data/new_batch.csv"
+python main.py --mode "inference" --file test.csv
+python main.py --mode "update"
+python main.py --mode "summary"
+python main.py --mode "add_file" --file ".input_data/new_batch.csv"
 ```
