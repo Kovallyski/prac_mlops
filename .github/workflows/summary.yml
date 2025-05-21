@@ -6,6 +6,8 @@ jobs:
   train:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
       - name: Load enviroment
         run: |
           python3 -m venv my_env
