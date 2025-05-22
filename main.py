@@ -50,6 +50,8 @@ def inference(file_path, **kwargs):
 def update(**kwargs):
     with open("config.json", 'r') as f:
         db = DataBase(json.load(f))
+    
+    db.load_train()
 
     if not db.get_unknown():
         print("No new data to update models on!")
