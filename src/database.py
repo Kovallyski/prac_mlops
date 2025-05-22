@@ -138,8 +138,8 @@ class DataBase:
         batchid = time.time()
         logging.info(f'batchid : {batchid}')
 
-        df['known'] = False
         df['batchid'] = batchid
+        df['known'] = False
 
         #CHECK OVERLAPPING
         self.df.set_index(['Date', 'Location'], inplace=True)

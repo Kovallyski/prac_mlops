@@ -1,0 +1,1 @@
+{"timestamp": "2025-05-22T15:01:08.601139", "best_score": 0.6779428645475681, "best_params": {"model__max_depth": 7, "model__min_samples_split": 10, "model__n_estimators": 250}}

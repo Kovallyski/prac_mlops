@@ -1,1 +1,1 @@
-{"timestamp": "2025-04-12T07:18:22.942931", "best_score": 0.7247830487076574, "best_params": {"model__C": 10, "model__penalty": "l1", "model__solver": "liblinear"}}
+{"timestamp": "2025-04-12T07:18:22.942931", "best_score": 0.7247830487076574, "best_params": {"model__C": 10, "model__penalty": "l1", "model__solver": "liblinear"}}{"timestamp": "2025-05-22T15:01:29.736772", "best_score": 0.7170091490110982, "best_params": {"model__C": 10, "model__penalty": "l1", "model__solver": "liblinear"}}

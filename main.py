@@ -114,6 +114,7 @@ def up_one(db, model_type, args):
 def update(**kwargs):
     with open("cfg/config.json", 'r') as f:
         db = DataBase(json.load(f))
+        db.load_train()
 
     if not db.get_unknown():
         print("No new data to update models on!")
