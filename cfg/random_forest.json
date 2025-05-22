@@ -1,0 +1,6 @@
+{
+    "model_type": "random_forest",
+    "database_path": "database/data.csv",
+    "quantile_path": "database/quantiles.csv",
+    "metadata_path": "database/metadata.csv"
+}

@@ -26,7 +26,7 @@ def get_args_parser():
 
 def run_model(db, model_type, args, file_path):
 
-    mt = ModelTrainer()
+    mt = ModelTrainer(f"cfg/{model_type}.json")
     model_name = mt.load_best_model()
     with open(os.path.join(preprocessing.PREPROC_PATH, model_name), 'rb') as f:
         preproc = pickle.load(f)
@@ -56,7 +56,7 @@ def inference(file_path, **kwargs):
 # NOTE: note all implemented functions are demostrated
 def up_one(db, model_type, args):
 
-    mt = ModelTrainer(f"{model_type}.json")
+    mt = ModelTrainer(f"cfg/{model_type}.json")
     model_name = mt.load_best_model()
 
     mode = 0
@@ -125,7 +125,7 @@ def update(**kwargs):
     db.set_known()
 
 def get_sum(X, y, model_type, **kwargs):
-    mt = ModelTrainer(f"{model_type}.json")
+    mt = ModelTrainer(f"cfg/{model_type}.json")
     model_name = mt.load_best_model()
     with open(os.path.join(preprocessing.PREPROC_PATH, model_name), 'rb') as f:
         preproc = pickle.load(f)
