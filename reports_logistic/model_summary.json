@@ -1,1 +1,1 @@
-{"best_model": {"type": "logistic", "hyperparams": {"model__C": 10, "model__penalty": "l1", "model__solver": "liblinear"}}, "history": [], "last_update": "2025-05-22T11:06:26.689858"}
+{"best_model": {"type": "logistic", "hyperparams": {"model__C": 10, "model__penalty": "l1", "model__solver": "liblinear"}}, "history": [], "last_update": "2025-05-22T11:17:07.719019"}
