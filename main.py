@@ -11,7 +11,7 @@ from sklearn.pipeline import Pipeline
 from src.database import DataBase
 from src.eda import check_data_quality
 from src.preprocessing import create_preprocessor, pre_preprocess_data
-import src.preprocessing
+import src.preprocessing as preprocessing
 from src.train import ModelTrainer
 from src.utils import display
 
