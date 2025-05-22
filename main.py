@@ -24,9 +24,7 @@ def get_args_parser():
     return parser
 
 
-def inference(file_path, **kwargs):
-    with open("config.json", 'r') as f:
-        db = DataBase(json.load(f))
+def run_model(db, model_type, args, file_path):
 
     mt = ModelTrainer()
     model_name = mt.load_best_model()
@@ -46,8 +44,17 @@ def inference(file_path, **kwargs):
     print(f'Saved predictions in {save_path}!')
 
 
+def inference(file_path, **kwargs):
+    with open("config.json", 'r') as f:
+        db = DataBase(json.load(f))
+
+    run_model(db, 'random_forest', args, file_path)
+    run_model(db, 'logistic', args, file_path)
+    run_model(db, 'knn', args, file_path)
+
+
 # NOTE: note all implemented functions are demostrated
-def up_one(db, model_type):
+def up_one(db, model_type, args):
 
     mt = ModelTrainer(f"{model_type}.json")
     model_name = mt.load_best_model()
@@ -112,20 +119,13 @@ def update(**kwargs):
         print("No new data to update models on!")
         return
 
-    up_one(db, 'random_forest')
-    up_one(db, 'logistic')
-    up_one(db, 'knn')
+    up_one(db, 'random_forest', args)
+    up_one(db, 'logistic', args)
+    up_one(db, 'knn', args)
     db.set_known()
 
-def summary(**kwargs):
-    with open("config.json", 'r') as f:
-        db = DataBase(json.load(f))
-
-    df, metadata, _, quantile = db.get_data()
-    df, metadata, score = check_data_quality(df, metadata, quantile)
-    X, y = pre_preprocess_data(df, metadata)
-
-    mt = ModelTrainer()
+def get_sum(X, y, model_type, **kwargs):
+    mt = ModelTrainer(f"{model_type}.json")
     model_name = mt.load_best_model()
     with open(os.path.join(preprocessing.PREPROC_PATH, model_name), 'rb') as f:
         preproc = pickle.load(f)
@@ -135,6 +135,18 @@ def summary(**kwargs):
     mt.class_names = ['No', 'Yes']
     print("Saved model summary in", mt.generate_summary())
     mt.interpret_model(X, y)
+    
+def summary(**kwargs):
+    with open("config.json", 'r') as f:
+        db = DataBase(json.load(f))
+
+    df, metadata, _, quantile = db.get_data()
+    df, metadata, score = check_data_quality(df, metadata, quantile)
+    X, y = pre_preprocess_data(df, metadata)
+
+    get_sum("random_forest")
+    get_sum('logistic')
+    get_sum("knn")
 
 # NOTE: note all implemented functions are demostrated
 def add_data(file_path, **kwargs):
