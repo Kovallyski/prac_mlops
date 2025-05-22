@@ -2,5 +2,6 @@
     "model_type": "logistic",
     "database_path": "database/data.csv",
     "quantile_path": "database/quantiles.csv",
-    "metadata_path": "database/metadata.csv"
+    "metadata_path": "database/metadata.csv",
+    "stations_path": "input/data.json"
 }
