@@ -65,3 +65,13 @@ python main.py --mode "update"
 python main.py --mode "summary"
 python main.py --mode "add_file" --file ".input_data/new_batch.csv"
 ```
+
+###**Развертывание**
+В проекте настроен workflow CI/CD Pipeline (.github/workflows/main.yml)для автоматизации процессов разработки и обучения моделей:
+- Запускается при каждом push / pull request в ветку main
+- Выполняет следующие шаги:
+- - Установка зависимостей
+- - Запуск автоматических тестов и сборки результатов моделей (summary)
+Обучение модели после успешного прохождения тестов
+Сохранение логов обучения как артефактов
+```
