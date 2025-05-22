@@ -126,7 +126,8 @@ class DataBase:
             df['Location'] = config['location']
             full_df = pd.concat([full_df, df])
         
-        df, metadata_df = self.__check_data(full_df)
+        # df, metadata_df = self.__check_data(full_df)
+        df = full_df
 
         not_found = pd.Index(DataBase.target_columns).difference(df.columns.intersection(DataBase.target_columns))
         if len(not_found):
@@ -139,21 +140,25 @@ class DataBase:
 
         df['known'] = False
         df['batchid'] = batchid
-        metadata_df['batchid'] = batchid
 
         #CHECK OVERLAPPING
         self.df.set_index(['Date', 'Location'], inplace=True)
         df.set_index(['Date', 'Location'], inplace=True)
-        idx = self.df.index.intersection(df.index)
+        inter_idx = self.df.index.intersection(df.index)
+        updated_df = self.df.loc[inter_idx]
+        idx = ((df.loc[inter_idx] == updated_df) | (df.loc[inter_idx].isna() & updated_df.isna())).all(axis=1).index
         if len(idx):
             logging.warning('Data overlapped with old data, old data will be overwritten, except NaN through new values.')
-            updated_df = self.df.loc[idx]
             df.loc[idx] = df.loc[idx].fillna(updated_df.loc[idx])
             self.df.loc[idx] = df.loc[idx]
-            df = df.drop(idx)
+        df = df.drop(inter_idx)
+        df.reset_index(inplace=True)
+        self.df.reset_index(inplace=True)
 
-            df.reset_index(inplace=True)
-            self.df.reset_index(inplace=True)
+
+        metadata_df = self.__get_metadata(df)
+        metadata_df = metadata_df.reindex(sorted(self.metadata_df.columns), axis=1)
+        metadata_df['batchid'] = batchid
 
         df = df[self.all_columns+self.target_columns+['batchid', 'known']]
         df.to_csv(self.path, index=False, mode='a', header=False)
