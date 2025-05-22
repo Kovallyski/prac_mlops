@@ -126,6 +126,20 @@ class DataBase:
         df['batchid'] = batchid
         metadata_df['batchid'] = batchid
 
+        #CHECK OVERLAPPING
+        self.df.set_index(['Date', 'Location'], inplace=True)
+        df.set_index(['Date', 'Location'], inplace=True)
+        idx = self.df.index.intersection(df.index)
+        if len(idx):
+            print('Data overlapped with old data, old data will be overwritten, except NaN through new values.')
+            updated_df = self.df.loc[idx]
+            df.loc[idx] = df.loc[idx].fillna(updated_df.loc[idx])
+            self.df.loc[idx] = df.loc[idx]
+            df = df.drop(idx)
+            
+            df.reset_index(inplace=True)
+            self.df.reset_index(inplace=True)
+
         df = df[self.all_columns+self.target_columns+['batchid', 'known']]
         df.to_csv(self.path, index=False, mode='a', header=False)
 

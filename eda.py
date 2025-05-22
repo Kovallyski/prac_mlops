@@ -66,6 +66,6 @@ def check_data_quality(df, metadata_df, quantile_df):
     for name in numeric_columns:
         print(f'{name} : {iou[name]}')
 
-    score = 1 - (iou < 2 / 3).mean()
+    score = 1 - (iou <= 4 / 5).mean()
     
     return df, metadata_df, score
