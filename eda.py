@@ -1,6 +1,20 @@
 from numpy import median
 import numpy as np
 import pandas as pd
+import logging
+
+output_handler = logging.FileHandler('logs/eda.log')
+output_handler.setLevel(logging.INFO)
+
+warning_handler = logging.FileHandler('logs/eda_err.log')
+warning_handler.setLevel(logging.WARNING)
+
+logging.basicConfig(level=logging.INFO,
+    format='%(asctime)s : %(levelname)s - %(message)s',
+    handlers=[
+        output_handler,
+        warning_handler
+    ])
 
 
 def check_data_quality(df, metadata_df, quantile_df):
@@ -20,19 +34,19 @@ def check_data_quality(df, metadata_df, quantile_df):
 
     full_duplicated = df.duplicated()
     collisions = df[index_columns].duplicated(keep=False) & ~df.duplicated(keep=False)
-    print(f'Detected {full_duplicated.sum()} duplicates and {collisions.sum()} collisions')
+    logging.info(f'Detected {full_duplicated.sum()} duplicates and {collisions.sum()} collisions')
     if full_duplicated.sum() + collisions.sum():
         df = df.drop(df[full_duplicated].index)
         df = df.drop(df[collisions].index)
-        print(f'All duplicates and collisions removed')
+        logging.info(f'All duplicates and collisions removed')
 
     new_datetime = pd.to_datetime(df['Date'], errors='coerce')
     bad_values = new_datetime.isna()
     if bad_values.sum():
-        print(f"Found values {list(df['Date'][bad_values].unique())} out of range in column Date", end='')
+        logging.warning(f"Found values {list(df['Date'][bad_values].unique())} out of range in column Date", end='')
         df['Date'] = new_datetime
         df = df.drop(df[bad_values].index)
-        print(', all removed.')
+        logging.warning(', all removed.')
 
 
     def check_winddir(s):
@@ -48,7 +62,7 @@ def check_data_quality(df, metadata_df, quantile_df):
     for wind_dir in ['WindGustDir', 'WindDir9am', 'WindDir3pm']:
         bad_values = df[wind_dir][~check_winddir(df[wind_dir])]
         if bad_values.sum():
-            print(f"Found values {list(bad_values.unique())} out of range in column {wind_dir}, all removed")
+            logging.warning(f"Found values {list(bad_values.unique())} out of range in column {wind_dir}, all removed")
             df.loc[bad_values, wind_dir] = pd.NA
         df[wind_dir+'_x'] = df[wind_dir].map(lambda d : np.cos(angle(d)), na_action='ignore')
         df[wind_dir+'_y'] = df[wind_dir].map(lambda d : np.sin(angle(d)), na_action='ignore')
@@ -62,10 +76,10 @@ def check_data_quality(df, metadata_df, quantile_df):
 
     iou = (meta_q1.combine(etal_q1, min) - meta_q3.combine(etal_q3, max)) / (meta_q1 - meta_q3)
     iou = iou.combine(0, max)
-    print(f'Intersection in numeric data:')
+    logging.info(f'Intersection in numeric data:')
     for name in numeric_columns:
-        print(f'{name} : {iou[name]}')
+        logging.info(f'{name} : {iou[name]}')
 
-    score = 1 - (iou < 2 / 3).mean()
+    score = 1 - (iou <= 4 / 5).mean()
     
     return df, metadata_df, score

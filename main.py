@@ -47,15 +47,9 @@ def inference(file_path, **kwargs):
 
 
 # NOTE: note all implemented functions are demostrated
-def update(**kwargs):
-    with open("config.json", 'r') as f:
-        db = DataBase(json.load(f))
+def up_one(db, model_type):
 
-    if not db.get_unknown():
-        print("No new data to update models on!")
-        return
-
-    mt = ModelTrainer()
+    mt = ModelTrainer(f"{model_type}.json")
     model_name = mt.load_best_model()
 
     mode = 0
@@ -89,7 +83,8 @@ def update(**kwargs):
 
     if mode == 0:
         # X_new should be reloaded with new metadata, but is not since metadata merge without a full load is currently impossible
-        mt.update_model(X_new, y_new)
+        _, metr = mt.update_model(X_new, y_new)
+        mt.save_model(metr, best=True)
     else:
         df, metadata, _, _ = db.get_data()
         df, metadata, score = check_data_quality(df, metadata, metadata)
@@ -108,6 +103,18 @@ def update(**kwargs):
             pickle.dump(preproc, f)
 
     print('Updated model!')
+
+def update(**kwargs):
+    with open("config.json", 'r') as f:
+        db = DataBase(json.load(f))
+
+    if not db.get_unknown():
+        print("No new data to update models on!")
+        return
+
+    up_one(db, 'random_forest')
+    up_one(db, 'logistic')
+    up_one(db, 'knn')
     db.set_known()
 
 def summary(**kwargs):

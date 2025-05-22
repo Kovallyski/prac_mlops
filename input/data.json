@@ -1,0 +1,296 @@
+[
+    {
+        "location": "Albury",
+        "wind_station": "input/Albury_wind.csv",
+        "sky_station": "input/Albury_sky.csv",
+        "value_station": "input/Albury_value.csv"
+    },
+    {
+        "location": "BadgerysCreek",
+        "wind_station": "input/BadgerysCreek_wind.csv",
+        "sky_station": "input/BadgerysCreek_sky.csv",
+        "value_station": "input/BadgerysCreek_value.csv"
+    },
+    {
+        "location": "Cobar",
+        "wind_station": "input/Cobar_wind.csv",
+        "sky_station": "input/Cobar_sky.csv",
+        "value_station": "input/Cobar_value.csv"
+    },
+    {
+        "location": "CoffsHarbour",
+        "wind_station": "input/CoffsHarbour_wind.csv",
+        "sky_station": "input/CoffsHarbour_sky.csv",
+        "value_station": "input/CoffsHarbour_value.csv"
+    },
+    {
+        "location": "Moree",
+        "wind_station": "input/Moree_wind.csv",
+        "sky_station": "input/Moree_sky.csv",
+        "value_station": "input/Moree_value.csv"
+    },
+    {
+        "location": "Newcastle",
+        "wind_station": "input/Newcastle_wind.csv",
+        "sky_station": "input/Newcastle_sky.csv",
+        "value_station": "input/Newcastle_value.csv"
+    },
+    {
+        "location": "NorahHead",
+        "wind_station": "input/NorahHead_wind.csv",
+        "sky_station": "input/NorahHead_sky.csv",
+        "value_station": "input/NorahHead_value.csv"
+    },
+    {
+        "location": "NorfolkIsland",
+        "wind_station": "input/NorfolkIsland_wind.csv",
+        "sky_station": "input/NorfolkIsland_sky.csv",
+        "value_station": "input/NorfolkIsland_value.csv"
+    },
+    {
+        "location": "Penrith",
+        "wind_station": "input/Penrith_wind.csv",
+        "sky_station": "input/Penrith_sky.csv",
+        "value_station": "input/Penrith_value.csv"
+    },
+    {
+        "location": "Richmond",
+        "wind_station": "input/Richmond_wind.csv",
+        "sky_station": "input/Richmond_sky.csv",
+        "value_station": "input/Richmond_value.csv"
+    },
+    {
+        "location": "Sydney",
+        "wind_station": "input/Sydney_wind.csv",
+        "sky_station": "input/Sydney_sky.csv",
+        "value_station": "input/Sydney_value.csv"
+    },
+    {
+        "location": "SydneyAirport",
+        "wind_station": "input/SydneyAirport_wind.csv",
+        "sky_station": "input/SydneyAirport_sky.csv",
+        "value_station": "input/SydneyAirport_value.csv"
+    },
+    {
+        "location": "WaggaWagga",
+        "wind_station": "input/WaggaWagga_wind.csv",
+        "sky_station": "input/WaggaWagga_sky.csv",
+        "value_station": "input/WaggaWagga_value.csv"
+    },
+    {
+        "location": "Williamtown",
+        "wind_station": "input/Williamtown_wind.csv",
+        "sky_station": "input/Williamtown_sky.csv",
+        "value_station": "input/Williamtown_value.csv"
+    },
+    {
+        "location": "Wollongong",
+        "wind_station": "input/Wollongong_wind.csv",
+        "sky_station": "input/Wollongong_sky.csv",
+        "value_station": "input/Wollongong_value.csv"
+    },
+    {
+        "location": "Canberra",
+        "wind_station": "input/Canberra_wind.csv",
+        "sky_station": "input/Canberra_sky.csv",
+        "value_station": "input/Canberra_value.csv"
+    },
+    {
+        "location": "Tuggeranong",
+        "wind_station": "input/Tuggeranong_wind.csv",
+        "sky_station": "input/Tuggeranong_sky.csv",
+        "value_station": "input/Tuggeranong_value.csv"
+    },
+    {
+        "location": "MountGinini",
+        "wind_station": "input/MountGinini_wind.csv",
+        "sky_station": "input/MountGinini_sky.csv",
+        "value_station": "input/MountGinini_value.csv"
+    },
+    {
+        "location": "Ballarat",
+        "wind_station": "input/Ballarat_wind.csv",
+        "sky_station": "input/Ballarat_sky.csv",
+        "value_station": "input/Ballarat_value.csv"
+    },
+    {
+        "location": "Bendigo",
+        "wind_station": "input/Bendigo_wind.csv",
+        "sky_station": "input/Bendigo_sky.csv",
+        "value_station": "input/Bendigo_value.csv"
+    },
+    {
+        "location": "Sale",
+        "wind_station": "input/Sale_wind.csv",
+        "sky_station": "input/Sale_sky.csv",
+        "value_station": "input/Sale_value.csv"
+    },
+    {
+        "location": "MelbourneAirport",
+        "wind_station": "input/MelbourneAirport_wind.csv",
+        "sky_station": "input/MelbourneAirport_sky.csv",
+        "value_station": "input/MelbourneAirport_value.csv"
+    },
+    {
+        "location": "Melbourne",
+        "wind_station": "input/Melbourne_wind.csv",
+        "sky_station": "input/Melbourne_sky.csv",
+        "value_station": "input/Melbourne_value.csv"
+    },
+    {
+        "location": "Mildura",
+        "wind_station": "input/Mildura_wind.csv",
+        "sky_station": "input/Mildura_sky.csv",
+        "value_station": "input/Mildura_value.csv"
+    },
+    {
+        "location": "Nhil",
+        "wind_station": "input/Nhil_wind.csv",
+        "sky_station": "input/Nhil_sky.csv",
+        "value_station": "input/Nhil_value.csv"
+    },
+    {
+        "location": "Portland",
+        "wind_station": "input/Portland_wind.csv",
+        "sky_station": "input/Portland_sky.csv",
+        "value_station": "input/Portland_value.csv"
+    },
+    {
+        "location": "Watsonia",
+        "wind_station": "input/Watsonia_wind.csv",
+        "sky_station": "input/Watsonia_sky.csv",
+        "value_station": "input/Watsonia_value.csv"
+    },
+    {
+        "location": "Dartmoor",
+        "wind_station": "input/Dartmoor_wind.csv",
+        "sky_station": "input/Dartmoor_sky.csv",
+        "value_station": "input/Dartmoor_value.csv"
+    },
+    {
+        "location": "Brisbane",
+        "wind_station": "input/Brisbane_wind.csv",
+        "sky_station": "input/Brisbane_sky.csv",
+        "value_station": "input/Brisbane_value.csv"
+    },
+    {
+        "location": "Cairns",
+        "wind_station": "input/Cairns_wind.csv",
+        "sky_station": "input/Cairns_sky.csv",
+        "value_station": "input/Cairns_value.csv"
+    },
+    {
+        "location": "GoldCoast",
+        "wind_station": "input/GoldCoast_wind.csv",
+        "sky_station": "input/GoldCoast_sky.csv",
+        "value_station": "input/GoldCoast_value.csv"
+    },
+    {
+        "location": "Townsville",
+        "wind_station": "input/Townsville_wind.csv",
+        "sky_station": "input/Townsville_sky.csv",
+        "value_station": "input/Townsville_value.csv"
+    },
+    {
+        "location": "Adelaide",
+        "wind_station": "input/Adelaide_wind.csv",
+        "sky_station": "input/Adelaide_sky.csv",
+        "value_station": "input/Adelaide_value.csv"
+    },
+    {
+        "location": "MountGambier",
+        "wind_station": "input/MountGambier_wind.csv",
+        "sky_station": "input/MountGambier_sky.csv",
+        "value_station": "input/MountGambier_value.csv"
+    },
+    {
+        "location": "Nuriootpa",
+        "wind_station": "input/Nuriootpa_wind.csv",
+        "sky_station": "input/Nuriootpa_sky.csv",
+        "value_station": "input/Nuriootpa_value.csv"
+    },
+    {
+        "location": "Woomera",
+        "wind_station": "input/Woomera_wind.csv",
+        "sky_station": "input/Woomera_sky.csv",
+        "value_station": "input/Woomera_value.csv"
+    },
+    {
+        "location": "Albany",
+        "wind_station": "input/Albany_wind.csv",
+        "sky_station": "input/Albany_sky.csv",
+        "value_station": "input/Albany_value.csv"
+    },
+    {
+        "location": "Witchcliffe",
+        "wind_station": "input/Witchcliffe_wind.csv",
+        "sky_station": "input/Witchcliffe_sky.csv",
+        "value_station": "input/Witchcliffe_value.csv"
+    },
+    {
+        "location": "PearceRAAF",
+        "wind_station": "input/PearceRAAF_wind.csv",
+        "sky_station": "input/PearceRAAF_sky.csv",
+        "value_station": "input/PearceRAAF_value.csv"
+    },
+    {
+        "location": "PerthAirport",
+        "wind_station": "input/PerthAirport_wind.csv",
+        "sky_station": "input/PerthAirport_sky.csv",
+        "value_station": "input/PerthAirport_value.csv"
+    },
+    {
+        "location": "Perth",
+        "wind_station": "input/Perth_wind.csv",
+        "sky_station": "input/Perth_sky.csv",
+        "value_station": "input/Perth_value.csv"
+    },
+    {
+        "location": "SalmonGums",
+        "wind_station": "input/SalmonGums_wind.csv",
+        "sky_station": "input/SalmonGums_sky.csv",
+        "value_station": "input/SalmonGums_value.csv"
+    },
+    {
+        "location": "Walpole",
+        "wind_station": "input/Walpole_wind.csv",
+        "sky_station": "input/Walpole_sky.csv",
+        "value_station": "input/Walpole_value.csv"
+    },
+    {
+        "location": "Hobart",
+        "wind_station": "input/Hobart_wind.csv",
+        "sky_station": "input/Hobart_sky.csv",
+        "value_station": "input/Hobart_value.csv"
+    },
+    {
+        "location": "Launceston",
+        "wind_station": "input/Launceston_wind.csv",
+        "sky_station": "input/Launceston_sky.csv",
+        "value_station": "input/Launceston_value.csv"
+    },
+    {
+        "location": "AliceSprings",
+        "wind_station": "input/AliceSprings_wind.csv",
+        "sky_station": "input/AliceSprings_sky.csv",
+        "value_station": "input/AliceSprings_value.csv"
+    },
+    {
+        "location": "Darwin",
+        "wind_station": "input/Darwin_wind.csv",
+        "sky_station": "input/Darwin_sky.csv",
+        "value_station": "input/Darwin_value.csv"
+    },
+    {
+        "location": "Katherine",
+        "wind_station": "input/Katherine_wind.csv",
+        "sky_station": "input/Katherine_sky.csv",
+        "value_station": "input/Katherine_value.csv"
+    },
+    {
+        "location": "Uluru",
+        "wind_station": "input/Uluru_wind.csv",
+        "sky_station": "input/Uluru_sky.csv",
+        "value_station": "input/Uluru_value.csv"
+    }
+]
