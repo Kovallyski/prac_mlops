@@ -20,14 +20,17 @@ jobs:
       - name: Saving models
         uses: actions/upload-artifact@v4
         with:
+          name: 'models'
           path: './models_*'
       - name: Saving preproc
         uses: actions/upload-artifact@v4
         with:
+          name: 'preproc'
           path: './preproc'
       - name: Saving reports
         uses: actions/upload-artifact@v4
         with:
+          name: 'reports'
           path: './reports*'
         
     
