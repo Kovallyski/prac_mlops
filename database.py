@@ -3,8 +3,23 @@ import pathlib
 import time
 import pandas as pd
 import json
+import logging
+
 
 from utils import display
+
+output_handler = logging.FileHandler('logs/database.log')
+output_handler.setLevel(logging.INFO)
+
+warning_handler = logging.FileHandler('logs/database_err.log')
+warning_handler.setLevel(logging.WARNING)
+
+logging.basicConfig(level=logging.INFO,
+    format='%(asctime)s : %(levelname)s - %(message)s',
+    handlers=[
+        output_handler,
+        warning_handler
+    ])
 
 class DataBase:
     category_columns = ['WindGustDir', 'WindDir9am', 'WindDir3pm', 'RainToday']
@@ -49,6 +64,7 @@ class DataBase:
         
         with open(conf['stations_path'], 'r') as f:
             self.stations_config = json.load(f)
+
             
     def __get_metadata(self, df):
         shape = df.shape
@@ -56,16 +72,16 @@ class DataBase:
         index_duplicated = df[self.index_columns].duplicated()
         collisions = (~ df[index_duplicated].duplicated())
 
-        print(f'Number of duplicated datas: {full_duplicated.sum()}')
-        print(f'among them duplicated by date and location: {index_duplicated.sum()}')
-        print(f'Number of date&location collisions: {collisions.sum()}')
+        logging.info(f'Number of duplicated datas: {full_duplicated.sum()}')
+        logging.info(f'among them duplicated by date and location: {index_duplicated.sum()}')
+        logging.info(f'Number of date&location collisions: {collisions.sum()}')
         nacompletness = df[self.numeric_columns + self.category_columns].isna()
-        print(f'Missing values: {nacompletness.sum().sum()} ({100*nacompletness.sum().sum()/shape[0]:}%)')
-        print(f'among them:')
+        logging.info(f'Missing values: {nacompletness.sum().sum()} ({100*nacompletness.sum().sum()/shape[0]:}%)')
+        logging.info(f'among them:')
         for name in self.numeric_columns+self.category_columns:
             p = df[name].isna().sum()
             if p > 0:
-                print(f'{name} : {p} ({p/shape[0]:}%)')
+                logging.info(f'{name} : {p} ({p/shape[0]:}%)')
 
         metadata_df = pd.DataFrame([df[self.numeric_columns].max(),df[self.numeric_columns].min(),df[self.numeric_columns].quantile(0.25),df[self.numeric_columns].quantile(0.75),nacompletness[self.numeric_columns+self.category_columns].sum(),nacompletness[self.numeric_columns+self.category_columns].sum()/shape[0]])
         metadata_df['type'] = ['max', 'min', 'q3', 'q1', 'na', 'na%']
@@ -79,9 +95,8 @@ class DataBase:
         #CHECK ALL COLUMNS
         all_columns = self.all_columns
         not_found = pd.Index(all_columns).difference(df.columns.intersection(all_columns))
-        display(not_found)
         if len(not_found):
-            print(f'Columns {not_found} not found in new data')
+            logging.error(f'Columns {not_found} not found in new data')
             return None
 
         metadata_df = self.__get_metadata(df)
@@ -91,7 +106,7 @@ class DataBase:
     
     def load_test(self, path):
         if not os.path.exists(path):
-            print(f'File {path} does not exist')
+            logging.error(f'File {path} does not exist')
             return None
         df = pd.read_csv(path)
 
@@ -115,12 +130,12 @@ class DataBase:
 
         not_found = pd.Index(DataBase.target_columns).difference(df.columns.intersection(DataBase.target_columns))
         if len(not_found):
-            print(f'Target columns {not_found} not found in new data')
+            logging.error(f'Target columns {not_found} not found in new data')
             return None
         
 
         batchid = time.time()
-        print(f'batchid : {batchid}')
+        logging.info(f'batchid : {batchid}')
 
         df['known'] = False
         df['batchid'] = batchid
@@ -131,12 +146,12 @@ class DataBase:
         df.set_index(['Date', 'Location'], inplace=True)
         idx = self.df.index.intersection(df.index)
         if len(idx):
-            print('Data overlapped with old data, old data will be overwritten, except NaN through new values.')
+            logging.warning('Data overlapped with old data, old data will be overwritten, except NaN through new values.')
             updated_df = self.df.loc[idx]
             df.loc[idx] = df.loc[idx].fillna(updated_df.loc[idx])
             self.df.loc[idx] = df.loc[idx]
             df = df.drop(idx)
-            
+
             df.reset_index(inplace=True)
             self.df.reset_index(inplace=True)
 
