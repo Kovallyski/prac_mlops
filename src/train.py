@@ -338,7 +338,7 @@ class ModelTrainer:
         else:
             accuracy_b = accuracy - 1
 
-        model_name = None
+        model_name = "not_best_model_ever.pth"
 
         if accuracy >= accuracy_b:
             self.best_model = self.model
