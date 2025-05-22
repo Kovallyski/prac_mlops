@@ -81,11 +81,11 @@ class ModelTrainer:
     
     def update_model(self, X_new, y_new):
         """Дообучение модели на новых данных"""
-        print(self.model.warm_start)
+        # print(self.model.warm_start)
         if self.model_type in ['logistic', 'random_forest'] and hasattr(self.model, "warm_start") and self.model.warm_start:
             self.model.fit(X_new, y_new)
         elif self.model_type == 'knn':
-            X = np.vstack([self.model.knn_model._fit_X, X_new])
+            X = np.vstack([self.model._fit_X, X_new])
             y = np.concatenate([self.model._y, y_new])
             self.model.fit(X, y)
         else:
@@ -97,11 +97,14 @@ class ModelTrainer:
         f1 = f1_score(y_new, y_pred)
 
         metrics = {
+            'timestamp': datetime.now().isoformat(),
             'accuracy' : accuracy,
             'balanced_accuracy': balanced_accuracy,
             'f1_score' : f1
         }
-            
+
+        # self.history.append(metrics)
+
         return self.model, metrics
     
     def validate_model(self, X_test, y_test):
@@ -146,9 +149,10 @@ class ModelTrainer:
                 'hyperparams': self.hyperparams
             }, f)
             
-        # Сохраняем историю метрик
+        # Сохраняем историю 
+        self.history.append(metrics)
         history_path = os.path.join(f'reports_{self.model_type}', 'metrics_history.json')
-        with open(history_path, 'w') as f:
+        with open(history_path, 'a+') as f:
             json.dump(self.history, f)
 
         if best:
@@ -373,7 +377,7 @@ class ModelTrainer:
         }
         
         report_path = os.path.join(f'reports_{self.model_type}', 'hyperparam_tuning.json')
-        with open(report_path, 'w') as f:
+        with open(report_path, 'a+') as f:
             json.dump(report, f)
         
         # Визуализация (и она тут не существует?)
