@@ -2,6 +2,7 @@ import os
 import pathlib
 import time
 import pandas as pd
+import json
 
 from utils import display
 
@@ -45,6 +46,9 @@ class DataBase:
             self.quantile_df.to_csv(self.quantile_path, index=False)
         else:
             self.quantile_df = pd.read_csv(self.quantile_path)
+        
+        with open(conf['stations_path'], 'r') as f:
+            self.stations_config = json.load(f)
             
     def __get_metadata(self, df):
         shape = df.shape
@@ -68,13 +72,9 @@ class DataBase:
 
         return metadata_df
 
-    def __load_data(self, path):
-        if not os.path.exists(path):
-            print(f'File {path} does not exist')
-            return None
-        df = pd.read_csv(path)
-        df = df.reindex(sorted(self.df.columns), axis=1)
+    def __check_data(self, df):
 
+        df = df.reindex(sorted(self.df.columns), axis=1)
 
         #CHECK ALL COLUMNS
         all_columns = self.all_columns
@@ -88,20 +88,36 @@ class DataBase:
         metadata_df = metadata_df.reindex(sorted(self.metadata_df.columns), axis=1)
 
         return df, metadata_df
-
     
     def load_test(self, path):
-        df, metadata_df = self.__load_data(path)
+        if not os.path.exists(path):
+            print(f'File {path} does not exist')
+            return None
+        df = pd.read_csv(path)
+
+        df, metadata_df = self.__check_data(df)
 
         return df, metadata_df
     
-    def load_train(self, path):
-        df, metadata_df = self.__load_data(path)
+    def load_train(self):
+
+        full_df = pd.DataFrame(columns=self.all_columns)
+        for config in self.stations_config:
+            df_wind = pd.read_csv(config['wind_station'])
+            df_sky = pd.read_csv(config['sky_station'])
+            df_value = pd.read_csv(config['value_station'])
+            df = pd.merge(df_wind, df_sky, on='Date', how='outer')
+            df = pd.merge(df, df_value, on='Date', how='outer')
+            df['Location'] = config['location']
+            full_df = pd.concat([full_df, df])
+        
+        df, metadata_df = self.__check_data(full_df)
 
         not_found = pd.Index(DataBase.target_columns).difference(df.columns.intersection(DataBase.target_columns))
         if len(not_found):
             print(f'Target columns {not_found} not found in new data')
             return None
+        
 
         batchid = time.time()
         print(f'batchid : {batchid}')
