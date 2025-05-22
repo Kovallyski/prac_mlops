@@ -38,6 +38,7 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+          echo "my_env" >> .gitignore
           git add .
           git diff --quiet && git diff --staged --quiet || git commit -m "Automated changes"
           git push
