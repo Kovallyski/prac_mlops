@@ -16,7 +16,7 @@ jobs:
       - name: Train
         run: |
           source my_env/bin/activate
-          python3 main.py --summary
+          python3 main.py -m summary
         
     
   
