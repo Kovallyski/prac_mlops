@@ -8,12 +8,12 @@ import os
 import sklearn
 from sklearn.pipeline import Pipeline
 
-from database import DataBase
-from eda import check_data_quality
-from preprocessing import create_preprocessor, pre_preprocess_data
-import preprocessing
-from train import ModelTrainer
-from utils import display
+from src.database import DataBase
+from src.eda import check_data_quality
+from src.preprocessing import create_preprocessor, pre_preprocess_data
+import src.preprocessing
+from src.train import ModelTrainer
+from src.utils import display
 
 def get_args_parser():
     parser = argparse.ArgumentParser()
