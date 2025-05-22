@@ -1,5 +1,5 @@
 Учитывая задание и выбранный датасет **Rain in Australia** (https://www.kaggle.com/datasets/jsphyg/weather-dataset-rattle-package), построим MVP MLOps-системы на потоковых табличных данных. Ниже приведён план реализации, соответствующий структуре из задания:
-
+Реализованные пункты можно посмотерть здесь: https://docs.google.com/document/d/1BnSneN98wWoUBJCqjB-tyAzIBvm1scpRny2cbWvA61I/edit?usp=sharing
 ---
 
 ### **Структура проекта**
