@@ -45,7 +45,7 @@ def run_model(db, model_type, args, file_path):
 
 
 def inference(file_path, **kwargs):
-    with open("config.json", 'r') as f:
+    with open("cfg/config.json", 'r') as f:
         db = DataBase(json.load(f))
 
     run_model(db, 'random_forest', args, file_path)
@@ -112,7 +112,7 @@ def up_one(db, model_type, args):
     print('Updated model!')
 
 def update(**kwargs):
-    with open("config.json", 'r') as f:
+    with open("cfg/config.json", 'r') as f:
         db = DataBase(json.load(f))
 
     if not db.get_unknown():
@@ -137,7 +137,7 @@ def get_sum(X, y, model_type, **kwargs):
     mt.interpret_model(X, y)
     
 def summary(**kwargs):
-    with open("config.json", 'r') as f:
+    with open("cfg/config.json", 'r') as f:
         db = DataBase(json.load(f))
 
     df, metadata, _, quantile = db.get_data()
@@ -150,7 +150,7 @@ def summary(**kwargs):
 
 # NOTE: note all implemented functions are demostrated
 def add_data(file_path, **kwargs):
-    with open("config.json", 'r') as f:
+    with open("cfg/config.json", 'r') as f:
         db = DataBase(json.load(f))
     batch_id = db.load_train(file_path)
 
